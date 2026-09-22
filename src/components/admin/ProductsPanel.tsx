@@ -361,10 +361,12 @@ export function ProductsPanel({
   function updateBulkRow(index: number, updates: Partial<BulkFormRow>) {
     setBulkRows((prev) => {
       const next = [...prev];
-      const target = { ...next[index], ...updates };
+      const current = next[index];
+      if (!current) return prev;
+      const target = { ...current, ...updates };
 
       // If brandId changed, reset campaignId for this row
-      if (updates.brandId !== undefined && updates.brandId !== next[index].brandId) {
+      if (updates.brandId !== undefined && updates.brandId !== current.brandId) {
         target.campaignId = "";
       }
 
@@ -413,8 +415,7 @@ export function ProductsPanel({
     let successCount = 0;
     const failures: string[] = [];
 
-    for (let i = 0; i < bulkRows.length; i++) {
-      const row = bulkRows[i];
+    for (const [i, row] of bulkRows.entries()) {
       const selectedBrand = brands.find((b) => b.id === row.brandId);
       const selectedCampaign = campaigns.find((c) => c.id === row.campaignId);
 
