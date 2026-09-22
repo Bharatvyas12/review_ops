@@ -1,0 +1,144 @@
+
+> reviewsys-admin@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:3000
+   - Network:      http://10.153.163.247:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 6.3s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 6.9s (177 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 25.6s (1005 modules)
+ GET /login 200 in 28740ms
+ ○ Compiling /app/login ...
+ ✓ Compiled / in 7.5s (1086 modules)
+ GET /app/login 200 in 19468ms
+ GET / 307 in 18000ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 1240ms (1108 modules)
+ GET /admin 200 in 14805ms
+ GET /login 200 in 4030ms
+ GET / 307 in 3920ms
+ GET /admin 200 in 1222ms
+ GET /admin 200 in 3768ms
+ ○ Compiling /app ...
+ ✓ Compiled /app in 7.1s (1226 modules)
+ GET /app 200 in 13207ms
+ ○ Compiling /admin/products ...
+ ✓ Compiled /admin/products in 4.9s (1245 modules)
+ GET /admin/products 200 in 8874ms
+ GET /admin/products 200 in 2033ms
+ ○ Compiling /admin/reviews ...
+ ✓ Compiled /admin/reviews in 3.1s (1251 modules)
+ GET /admin/reviews 200 in 7143ms
+ ○ Compiling /admin/payments ...
+ ✓ Compiled /admin/payments in 2.4s (1262 modules)
+ GET /admin/payments 200 in 8944ms
+ ○ Compiling /app/orders ...
+ ✓ Compiled /app/orders in 8.3s (1272 modules)
+ GET /app/orders 200 in 14865ms
+ GET /app 200 in 3951ms
+ GET /admin/payments 200 in 5363ms
+ ○ Compiling /admin/users ...
+ ✓ Compiled /admin/users in 3.5s (1275 modules)
+ GET /admin/users 200 in 10317ms
+ GET /admin/products 200 in 3940ms
+ ○ Compiling /app/verify ...
+ ✓ Compiled /app/verify in 4.5s (1279 modules)
+ GET /app/verify 200 in 7480ms
+ GET /admin/users 200 in 4777ms
+ ○ Compiling /admin/users/[id] ...
+ ✓ Compiled /admin/users/[id] in 13.4s (1269 modules)
+ GET /admin/users/b7e09c5c-d1b3-4154-92d8-eb20eba66f2f 200 in 22642ms
+ GET /admin/users/b7e09c5c-d1b3-4154-92d8-eb20eba66f2f 200 in 5602ms
+ GET /admin/payments 200 in 6536ms
+ ✓ Compiled in 28.6s (1278 modules)
+ GET /admin/payments 200 in 3075ms
+ ✓ Compiled in 2.4s (1276 modules)
+ GET /admin/payments 200 in 2352ms
+ ✓ Compiled in 2.1s (1278 modules)
+ GET /admin/payments 200 in 3195ms
+ ✓ Compiled in 2.2s (1278 modules)
+ GET /admin/payments 200 in 2181ms
+ ✓ Compiled in 1745ms (340 modules)
+ ✓ Compiled in 863ms (340 modules)
+ GET /admin/payments 200 in 2766ms
+ GET /admin/payments 200 in 410ms
+ ✓ Compiled in 771ms (340 modules)
+ GET /admin/payments 200 in 869ms
+ ✓ Compiled in 421ms (340 modules)
+ GET /admin/payments 200 in 717ms
+ ✓ Compiled in 16.8s (1278 modules)
+ GET /admin/payments 200 in 2424ms
+ ✓ Compiled in 5.9s (1278 modules)
+ GET /admin/payments 200 in 2250ms
+ ✓ Compiled in 4.3s (1278 modules)
+ GET /admin/payments 200 in 3860ms
+ GET /admin/payments 200 in 278ms
+ ✓ Compiled in 3.8s (1264 modules)
+ GET /admin/payments 200 in 3026ms
+ GET /admin/payments 200 in 238ms
+ ✓ Compiled in 1014ms (340 modules)
+ GET /admin/payments 200 in 1324ms
+ ✓ Compiled in 2.9s (1278 modules)
+ GET /admin/payments 200 in 2337ms
+ GET /admin/payments 200 in 417ms
+ ✓ Compiled in 2.1s (340 modules)
+ ✓ Compiled in 396ms (340 modules)
+ ✓ Compiled in 2.2s (340 modules)
+ ✓ Compiled in 649ms (340 modules)
+ ✓ Compiled in 23.2s (1278 modules)
+ ✓ Compiled in 4.9s (1278 modules)
+ ✓ Compiled in 661ms (340 modules)
+ ✓ Compiled in 3.3s (1278 modules)
+ ✓ Compiled in 2.8s (1264 modules)
+ ✓ Compiled in 3s (1278 modules)
+ ✓ Compiled in 10.8s (1278 modules)
+ ✓ Compiled in 8.5s (1278 modules)
+ ✓ Compiled in 5.8s (1278 modules)
+ ✓ Compiled in 2.4s (1278 modules)
+ ✓ Compiled in 735ms (340 modules)
+ ✓ Compiled in 630ms (340 modules)
+ ✓ Compiled in 724ms (340 modules)
+ ✓ Compiled in 626ms (340 modules)
+ ✓ Compiled in 518ms (340 modules)
+ ✓ Compiled in 678ms (340 modules)
+ ✓ Compiled in 4.3s (1278 modules)
+ ✓ Compiled in 3s (1278 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 14.4s (696 modules)
+ GET / 404 in 108ms
+ GET /login 404 in 61ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 15.2s (992 modules)
+ GET /login 404 in 57ms
+ ✓ Compiled in 7.1s (493 modules)
+ GET /login 404 in 14ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.8s (992 modules)
+ GET /admin 500 in 267ms
+ ✓ Compiled in 14s (1431 modules)
+ ✓ Compiled in 15.4s (1431 modules)
+ ✓ Compiled in 10.3s (1431 modules)
+ ✓ Compiled in 11.9s (493 modules)
+ ✓ Compiled in 1754ms (493 modules)
+ ✓ Compiled in 1852ms (493 modules)
+ ✓ Compiled in 1642ms (493 modules)
+ ✓ Compiled in 12.9s (493 modules)
+ ✓ Compiled in 993ms (493 modules)
+ ✓ Compiled in 501ms (493 modules)
+ ✓ Compiled in 4.6s (1634 modules)
+ ✓ Compiled in 619ms (493 modules)
+ ✓ Compiled in 638ms (493 modules)
+ ✓ Compiled in 627ms (493 modules)
+ ✓ Compiled in 19.2s (1431 modules)
+ ✓ Compiled in 4.7s (1431 modules)
+ ✓ Compiled in 6.4s (1431 modules)
+ ✓ Compiled in 824ms (493 modules)
+ ✓ Compiled in 1729ms (493 modules)
+ ✓ Compiled in 900ms (493 modules)
+ ✓ Compiled in 3.6s (696 modules)

@@ -1,0 +1,258 @@
+@import "tailwindcss";
+
+/* Dark mode is class-driven so the toggle can override the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+  --color-brand-950: #1e1b4b;
+
+  --shadow-panel: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 32px -12px rgb(15 23 42 / 0.18);
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-slide-up: slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  }
+
+  ::selection {
+    @apply bg-brand-500/25;
+  }
+
+  * {
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-white/10 dark:bg-slate-900;
+  }
+
+  .card-hover {
+    @apply transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-panel)];
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition
+      placeholder:text-slate-400
+      focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10
+      disabled:cursor-not-allowed disabled:opacity-60
+      dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500;
+  }
+
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+      transition focus:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-[13px];
+  }
+
+  .btn-primary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white
+      shadow-sm transition hover:bg-brand-500 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30
+      disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-secondary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700
+      shadow-sm transition hover:bg-slate-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-300/40
+      disabled:cursor-not-allowed disabled:opacity-55
+      dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+  }
+
+  .btn-danger {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white
+      shadow-sm transition hover:bg-rose-500 focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-500/30
+      disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600
+      transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus-visible:ring-4 focus-visible:ring-slate-300/40
+      disabled:cursor-not-allowed disabled:opacity-55
+      dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-300/90 transition
+      hover:bg-white/10 hover:text-white;
+  }
+
+  .nav-link-active {
+    @apply bg-white/15 text-white shadow-sm ring-1 ring-inset ring-white/15;
+  }
+
+  .table-head {
+    @apply bg-slate-50/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400;
+  }
+
+  .table-cell {
+    @apply px-4 py-3.5 text-sm text-slate-700 dark:text-slate-300;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =============================================================================
+   User panel identity.
+
+   A separate palette and type scale from the admin console on purpose: the
+   console is a cool, dense operations screen, while this is the thing a
+   reviewer opens on their phone. Warm paper, ink, one signal colour for money
+   and action, and tabular numerals so counts and amounts read as instruments
+   rather than decoration.
+
+   Nothing here overrides the tokens above, so /admin is unaffected.
+   ============================================================================= */
+
+@theme {
+  --font-display: var(--font-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-plex), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-paper-50: #fdfaf5;
+  --color-paper-100: #f7f1e6;
+  --color-paper-200: #ece2d2;
+  --color-paper-300: #d9cbb5;
+
+  --color-ink-500: #6b6154;
+  --color-ink-600: #4a4238;
+  --color-ink-700: #332c25;
+  --color-ink-800: #211c17;
+  --color-ink-900: #14110d;
+
+  --color-signal-50: #fff3e6;
+  --color-signal-100: #ffe1c4;
+  --color-signal-500: #e2620a;
+  --color-signal-600: #c24c07;
+  --color-signal-700: #9a3c06;
+
+  --color-done-50: #e9f6f3;
+  --color-done-500: #14907f;
+  --color-done-600: #0f766e;
+  --color-done-700: #0b5c56;
+
+  --shadow-lift: 0 1px 1px 0 rgb(33 28 23 / 0.04), 0 10px 24px -14px rgb(33 28 23 / 0.35);
+}
+
+@keyframes slot-tick {
+  0% { transform: translateY(0); opacity: 1; }
+  35% { transform: translateY(-0.5rem); opacity: 0; }
+  36% { transform: translateY(0.5rem); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slot-flash {
+  0% { background-color: var(--color-signal-100); }
+  100% { background-color: transparent; }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.72); }
+}
+
+@keyframes stage-fill {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@layer components {
+  /* Surface: paper, not a floating white card with a generic drop shadow. */
+  .u-card {
+    @apply rounded-2xl border border-paper-300/70 bg-paper-50 dark:border-white/10 dark:bg-ink-800;
+  }
+
+  .u-label {
+    @apply mb-1.5 block font-body text-[13px] font-medium text-ink-600 dark:text-paper-200;
+  }
+
+  .u-input {
+    @apply w-full rounded-xl border border-paper-300 bg-white px-3.5 py-3 font-body text-[15px] text-ink-900 outline-none transition
+      placeholder:text-ink-500/50
+      focus:border-signal-500 focus:ring-4 focus:ring-signal-500/12
+      disabled:cursor-not-allowed disabled:opacity-60
+      dark:border-white/15 dark:bg-ink-900 dark:text-paper-50 dark:placeholder:text-paper-200/30;
+  }
+
+  .u-btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 font-body text-[15px] font-semibold
+      transition active:scale-[0.99] focus:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .u-btn-primary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-signal-500 px-4 py-3 font-body text-[15px] font-semibold text-white
+      shadow-sm transition hover:bg-signal-600 active:scale-[0.99] focus:outline-none focus-visible:ring-4 focus-visible:ring-signal-500/30
+      disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .u-btn-secondary {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-3 font-body text-[15px] font-semibold text-ink-700
+      transition hover:bg-paper-100 active:scale-[0.99] focus:outline-none focus-visible:ring-4 focus-visible:ring-ink-500/15
+      disabled:cursor-not-allowed disabled:opacity-55
+      dark:border-white/15 dark:bg-ink-900 dark:text-paper-100 dark:hover:bg-ink-700;
+  }
+
+  .u-btn-ghost {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 font-body text-sm font-medium text-ink-600
+      transition hover:bg-paper-100 focus:outline-none focus-visible:ring-4 focus-visible:ring-ink-500/15
+      disabled:cursor-not-allowed disabled:opacity-55
+      dark:text-paper-200 dark:hover:bg-white/5;
+  }
+
+  .u-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-body text-[11px] font-semibold ring-1 ring-inset;
+  }
+
+  /* Numerals that line up in a column, like a ledger. */
+  .u-data {
+    @apply font-data tabular-nums tracking-tight;
+  }
+}

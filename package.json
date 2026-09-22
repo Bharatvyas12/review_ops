@@ -1,0 +1,52 @@
+{
+  "name": "reviewsys-admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db": "node --env-file-if-exists=.env.local supabase/tests/rls-and-slot-checks.mjs",
+    "test:schema": "node supabase/tests/schema-and-rls.mjs",
+    "pages:build": "npx --yes @cloudflare/next-on-pages@1",
+    "preview": "npm run pages:build && wrangler pages dev .vercel/output/static",
+    "deploy": "npm run pages:build && wrangler pages deploy .vercel/output/static",
+    "db:push": "supabase db push",
+    "db:bundle": "node scripts/bundle-migrations.mjs",
+    "admin:create": "node --env-file-if-exists=.env.local scripts/create-admin.mjs",
+    "seed:demo": "node --env-file-if-exists=.env.local scripts/seed-demo.mjs",
+    "demo:cleanup": "node --env-file-if-exists=.env.local scripts/cleanup-demo.mjs",
+    "doctor": "node --env-file-if-exists=.env.local scripts/doctor.mjs",
+    "key:generate": "node scripts/generate-encryption-key.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.45.4",
+    "next": "^15.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "server-only": "^0.0.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@eslint/eslintrc": "^3.1.0",
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^22.7.4",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "eslint": "^9.12.0",
+    "eslint-config-next": "^15.5.4",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

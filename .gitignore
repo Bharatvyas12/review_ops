@@ -1,0 +1,39 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+
+# cloudflare / vercel build output
+/.vercel/
+/.wrangler/
+/.open-next/
+
+# testing
+/coverage
+
+# misc
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files  NEVER commit secrets
+.env
+.env.*
+!.env.example
+!.env.test
+
+# supabase local state
+/supabase/.branches
+/supabase/.temp
