@@ -3423,9 +3423,6 @@ begin
   if v_campaign is not null and length(v_campaign) > 120 then
     raise exception 'campaign must be 120 characters or fewer' using errcode = 'P0001';
   end if;
-  if v_asin is not null and v_asin !~ '^[A-Z0-9]{10}$' then
-    raise exception 'asin_code must be exactly 10 letters or digits' using errcode = 'P0001';
-  end if;
   if v_limit is not null and (v_limit < 1 or v_limit > 100000) then
     raise exception 'daily_release_limit must be between 1 and 100000 slots' using errcode = 'P0001';
   end if;
@@ -3553,9 +3550,6 @@ begin
 
   if p_asin_code is not null then
     v_asin := upper(nullif(btrim(p_asin_code), ''));
-    if v_asin is not null and v_asin !~ '^[A-Z0-9]{10}$' then
-      raise exception 'asin_code must be exactly 10 letters or digits' using errcode = 'P0001';
-    end if;
   end if;
 
   update public.products

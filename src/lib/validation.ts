@@ -45,7 +45,7 @@ export const productCreateSchema = z.object({
   productLink: z.string().trim().max(1024).optional().nullable(),
   campaign: z.string().trim().max(120).optional().nullable(),
   campaignId: uuidSchema.optional().nullable(),
-  asinCode: z.string().trim().max(16).optional().nullable(),
+  asinCode: z.string().trim().optional().nullable(),
   // 0 and blank both mean "no staggering"; the RPC turns that into a null limit.
   dailyReleaseLimit: optionalCount(0, 100000).optional().default(null),
 });
@@ -62,7 +62,7 @@ export const productUpdateSchema = z.object({
   productLink: z.string().trim().max(1024).nullable().optional(),
   campaign: z.string().trim().max(120).nullable().optional(),
   campaignId: uuidSchema.nullable().optional(),
-  asinCode: z.string().trim().max(16).nullable().optional(),
+  asinCode: z.string().trim().nullable().optional(),
   // null leaves the stored limit alone (the close/reopen action sends only
   // `status`); 0 clears it.
   dailyReleaseLimit: optionalCount(0, 100000).optional(),

@@ -58,6 +58,42 @@ const EMPTY_FORM: FormState = {
   asinCode: "",
 };
 
+type BulkFormRow = {
+  id: string;
+  name: string;
+  brandId: string;
+  campaignId: string;
+  totalSlots: string;
+  dailyReleaseLimit: string;
+  cashbackAmount: string;
+  productLink: string;
+  asinCode: string;
+  description: string;
+  imageUrl: string;
+  uploadPreview: string | null;
+  errors?: {
+    name?: string;
+    totalSlots?: string;
+  };
+};
+
+function createDefaultBulkRow(defaultBrandId = ""): BulkFormRow {
+  return {
+    id: Math.random().toString(36).substring(2, 9),
+    name: "",
+    brandId: defaultBrandId,
+    campaignId: "",
+    totalSlots: "10",
+    dailyReleaseLimit: "",
+    cashbackAmount: "",
+    productLink: "",
+    asinCode: "",
+    description: "",
+    imageUrl: "",
+    uploadPreview: null,
+  };
+}
+
 export type ProductBrandOption = {
   id: string;
   brandSeq: number;
@@ -101,13 +137,18 @@ export function ProductsPanel({
   const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Bulk creation state
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const [bulkRows, setBulkRows] = useState<BulkFormRow[]>([]);
+  const [bulkSaving, setBulkSaving] = useState(false);
+
   // Filter campaigns list based on selected filter brand
   const filterAvailableCampaigns = useMemo(() => {
     if (!filterBrandId) return campaigns;
     return campaigns.filter((c) => c.brandId === filterBrandId);
   }, [campaigns, filterBrandId]);
 
-  // Form: campaigns available for currently selected form brand
+  // Form: campaigns available for currently selected single form brand
   const formAvailableCampaigns = useMemo(() => {
     if (!selectedBrandId) return [];
     return campaigns.filter((c) => c.brandId === selectedBrandId);
@@ -297,6 +338,129 @@ export function ProductsPanel({
     }
   }
 
+  // --- Bulk Creation Logic ---
+  function openBulkCreate() {
+    setBulkRows([createDefaultBulkRow(brands[0]?.id ?? "")]);
+    setBulkCreating(true);
+  }
+
+  function closeBulkModal() {
+    setBulkCreating(false);
+    setBulkRows([]);
+  }
+
+  function addBulkRow() {
+    setBulkRows((prev) => [...prev, createDefaultBulkRow(brands[0]?.id ?? "")]);
+  }
+
+  function removeBulkRow(index: number) {
+    if (bulkRows.length <= 1) return;
+    setBulkRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateBulkRow(index: number, updates: Partial<BulkFormRow>) {
+    setBulkRows((prev) => {
+      const next = [...prev];
+      const target = { ...next[index], ...updates };
+
+      // If brandId changed, reset campaignId for this row
+      if (updates.brandId !== undefined && updates.brandId !== next[index].brandId) {
+        target.campaignId = "";
+      }
+
+      // Clear errors on field edits if now valid
+      if (target.errors) {
+        const newErrors = { ...target.errors };
+        if (updates.name !== undefined && updates.name.trim()) delete newErrors.name;
+        if (updates.totalSlots !== undefined && Number(updates.totalSlots) >= 1) delete newErrors.totalSlots;
+        target.errors = Object.keys(newErrors).length > 0 ? newErrors : undefined;
+      }
+
+      next[index] = target;
+      return next;
+    });
+  }
+
+  function handleBulkUploaded(index: number, result: UploadResult) {
+    updateBulkRow(index, {
+      imageUrl: result.path,
+      uploadPreview: result.signedUrl,
+    });
+  }
+
+  async function saveBulk() {
+    let hasErrors = false;
+    const validatedRows = bulkRows.map((row) => {
+      const errors: { name?: string; totalSlots?: string } = {};
+      if (!row.name.trim()) {
+        errors.name = "Name is required";
+        hasErrors = true;
+      }
+      if (!row.totalSlots || Number(row.totalSlots) < 1) {
+        errors.totalSlots = "Min 1 slot";
+        hasErrors = true;
+      }
+      return { ...row, errors: Object.keys(errors).length > 0 ? errors : undefined };
+    });
+
+    if (hasErrors) {
+      setBulkRows(validatedRows);
+      toast.failure("Validation failed", "Please fill in all required fields marked in red.");
+      return;
+    }
+
+    setBulkSaving(true);
+    let successCount = 0;
+    const failures: string[] = [];
+
+    for (let i = 0; i < bulkRows.length; i++) {
+      const row = bulkRows[i];
+      const selectedBrand = brands.find((b) => b.id === row.brandId);
+      const selectedCampaign = campaigns.find((c) => c.id === row.campaignId);
+
+      const payload = {
+        name: row.name.trim(),
+        brand: selectedBrand?.name ?? null,
+        brandId: row.brandId || null,
+        description: row.description.trim() || null,
+        imageUrl: row.imageUrl || null,
+        totalSlots: row.totalSlots,
+        dailyReleaseLimit: row.dailyReleaseLimit.trim() === "" ? null : row.dailyReleaseLimit,
+        cashbackAmount: row.cashbackAmount.trim() === "" ? null : row.cashbackAmount,
+        productLink: row.productLink.trim() || null,
+        campaign: selectedCampaign ? `Campaign ${selectedCampaign.campaignNumber}` : null,
+        campaignId: row.campaignId || null,
+        asinCode: row.asinCode.trim() || null,
+      };
+
+      try {
+        await apiRequest("/api/admin/products", { body: payload });
+        successCount++;
+      } catch (error) {
+        failures.push(
+          `Row ${i + 1} (${row.name || "Unnamed"}): ${error instanceof Error ? error.message : "Failed"}`,
+        );
+      }
+    }
+
+    setBulkSaving(false);
+
+    if (failures.length === 0) {
+      toast.success("Bulk products created", `Successfully created all ${successCount} products.`);
+      closeBulkModal();
+      router.refresh();
+    } else if (successCount > 0) {
+      toast.toast(
+        "Bulk creation finished with issues",
+        { tone: "info", description: `Created ${successCount} of ${bulkRows.length} products. Failures: ${failures.join("; ")}` },
+      );
+      closeBulkModal();
+      router.refresh();
+    } else {
+      toast.failure("Failed to create products", failures.join("; "));
+    }
+  }
+
   const formValid =
     form.name.trim().length > 0 &&
     Number(form.totalSlots) >= 1 &&
@@ -367,9 +531,14 @@ export function ProductsPanel({
           )}
         </div>
 
-        <button type="button" onClick={openCreate} className="btn-primary">
-          Add product
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={openCreate} className="btn-primary">
+            Add Single Product
+          </button>
+          <button type="button" onClick={openBulkCreate} className="btn-secondary">
+            Add Bulk Products
+          </button>
+        </div>
       </div>
 
       <div className="card mt-4 overflow-hidden">
@@ -384,9 +553,14 @@ export function ProductsPanel({
             icon="□"
             action={
               products.length === 0 ? (
-                <button type="button" onClick={openCreate} className="btn-primary btn-sm">
-                  Add product
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={openCreate} className="btn-primary btn-sm">
+                    Add Single Product
+                  </button>
+                  <button type="button" onClick={openBulkCreate} className="btn-secondary btn-sm">
+                    Add Bulk Products
+                  </button>
+                </div>
               ) : hasActiveFilters ? (
                 <button type="button" onClick={clearFilters} className="btn-secondary btn-sm">
                   Clear filters
@@ -523,10 +697,11 @@ export function ProductsPanel({
         )}
       </div>
 
+      {/* --- Single Product Modal --- */}
       <Modal
         open={creating || editing !== null}
         onClose={closeForm}
-        title={editing ? "Edit product" : "Add product"}
+        title={editing ? "Edit product" : "Add Single Product"}
         description="Every change is written to the audit log with your admin id."
         footer={
           <>
@@ -659,7 +834,6 @@ export function ProductsPanel({
               <input
                 id="product-asin"
                 value={form.asinCode}
-                maxLength={16}
                 onChange={(event) => setForm({ ...form, asinCode: event.target.value })}
                 className="input font-mono"
                 placeholder="B09N3ZNHTY"
@@ -725,6 +899,222 @@ export function ProductsPanel({
         </div>
       </Modal>
 
+      {/* --- Bulk Products Modal --- */}
+      <Modal
+        open={bulkCreating}
+        onClose={closeBulkModal}
+        title="Add Bulk Products"
+        description="Add multiple products at once. Complete the product details below and submit."
+        size="lg"
+        footer={
+          <div className="flex w-full flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={addBulkRow}
+              className="btn-secondary btn-sm"
+              disabled={bulkSaving}
+            >
+              + Add More Product
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={closeBulkModal}
+                className="btn-secondary"
+                disabled={bulkSaving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={bulkSaving}
+                onClick={() => void saveBulk()}
+                className="btn-primary"
+              >
+                {bulkSaving
+                  ? "Creating products..."
+                  : `Create ${bulkRows.length} Product${bulkRows.length > 1 ? "s" : ""}`}
+              </button>
+            </div>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {bulkRows.map((row, index) => {
+            const rowAvailableCampaigns = row.brandId
+              ? campaigns.filter((c) => c.brandId === row.brandId)
+              : [];
+
+            return (
+              <div
+                key={row.id}
+                className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 transition-all dark:border-white/10 dark:bg-slate-800/40"
+              >
+                <div className="mb-3 flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-white/10">
+                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    Product #{index + 1}
+                  </span>
+                  {bulkRows.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeBulkRow(index)}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline dark:text-red-400"
+                    >
+                      - Remove Row
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {/* Row 1: Name, Brand, Campaign */}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="label">
+                        Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        value={row.name}
+                        onChange={(e) => updateBulkRow(index, { name: e.target.value })}
+                        className={`input ${row.errors?.name ? "border-red-500 ring-1 ring-red-500" : ""}`}
+                        placeholder="Product Name"
+                      />
+                      {row.errors?.name && (
+                        <p className="mt-1 text-xs text-red-500">{row.errors.name}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="label">Brand</label>
+                      <select
+                        value={row.brandId}
+                        onChange={(e) => updateBulkRow(index, { brandId: e.target.value })}
+                        className="input"
+                      >
+                        <option value="">Select Brand...</option>
+                        {brands.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.name} ({brandDisplayId(b.brandSeq)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Campaign</label>
+                      <select
+                        value={row.campaignId}
+                        disabled={!row.brandId || rowAvailableCampaigns.length === 0}
+                        onChange={(e) => updateBulkRow(index, { campaignId: e.target.value })}
+                        className="input"
+                      >
+                        <option value="">
+                          {!row.brandId
+                            ? "Select brand first..."
+                            : rowAvailableCampaigns.length === 0
+                              ? "No campaigns"
+                              : "Select Campaign..."}
+                        </option>
+                        {rowAvailableCampaigns.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            Campaign {c.campaignNumber}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Slots, Daily Limit, Cashback */}
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="label">
+                        Total Slots <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.totalSlots}
+                        onChange={(e) => updateBulkRow(index, { totalSlots: e.target.value })}
+                        className={`input ${row.errors?.totalSlots ? "border-red-500 ring-1 ring-red-500" : ""}`}
+                      />
+                      {row.errors?.totalSlots && (
+                        <p className="mt-1 text-xs text-red-500">{row.errors.totalSlots}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="label">Daily Limit</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={row.dailyReleaseLimit}
+                        onChange={(e) => updateBulkRow(index, { dailyReleaseLimit: e.target.value })}
+                        className="input"
+                        placeholder="e.g. 5"
+                      />
+                    </div>
+                    <div>
+                      <label className="label">Cashback (₹)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={row.cashbackAmount}
+                        onChange={(e) => updateBulkRow(index, { cashbackAmount: e.target.value })}
+                        className="input"
+                        placeholder="250"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 3: Product Link, ASIN Code */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="label">Product Link</label>
+                      <input
+                        type="url"
+                        value={row.productLink}
+                        onChange={(e) => updateBulkRow(index, { productLink: e.target.value })}
+                        className="input"
+                        placeholder="https://amazon.in/dp/..."
+                      />
+                    </div>
+                    <div>
+                      <label className="label">ASIN Code</label>
+                      <input
+                        value={row.asinCode}
+                        onChange={(e) => updateBulkRow(index, { asinCode: e.target.value })}
+                        className="input font-mono"
+                        placeholder="Any ASIN text"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 4: Description */}
+                  <div>
+                    <label className="label">Description</label>
+                    <textarea
+                      rows={2}
+                      value={row.description}
+                      onChange={(e) => updateBulkRow(index, { description: e.target.value })}
+                      className="input resize-none"
+                      placeholder="Product instructions or details..."
+                    />
+                  </div>
+
+                  {/* Row 5: Product Image */}
+                  <div>
+                    <span className="label">Product Image</span>
+                    <ImageDropzone
+                      purpose="product-image"
+                      previewUrl={row.uploadPreview}
+                      onUploaded={(res) => handleBulkUploaded(index, res)}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Modal>
+
+      {/* --- Confirm Status Modal --- */}
       <Modal
         open={confirmClose !== null}
         onClose={() => setConfirmClose(null)}
