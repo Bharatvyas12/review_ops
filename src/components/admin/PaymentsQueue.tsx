@@ -118,7 +118,6 @@ export function PaymentsQueue({ rows }: { rows: PaymentRow[] }) {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {rows.map((row) => {
-                const details = revealed[row.orderId];
                 const missingBank = !row.bank?.accountNumberLast4 && !row.bank?.upiId;
                 return (
                   <tr key={row.orderId} className="transition hover:bg-slate-50/70 dark:hover:bg-white/5">

@@ -9,7 +9,6 @@ import { IconExternal, IconSearch } from "@/components/ui/icons";
 import { apiRequest } from "@/lib/api-client";
 import { useRealtimeRefresh } from "@/lib/use-realtime-refresh";
 import { formatDate } from "@/lib/format";
-import type { BrandRow } from "@/lib/types";
 
 export type BrandListItem = {
   id: string;
