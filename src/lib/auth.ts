@@ -123,6 +123,15 @@ export type UserSession = {
   supabase: ServerSupabaseClient;
 };
 
+/**
+ * TEMPORARY kill-switch for mobile OTP verification.
+ *
+ * false = no OTP needed to verify, claim, or submit. All phone gates in the
+ * app layer pass through, and the /app/verify page redirects to /app.
+ * Set back to true (and re-apply the DB check in migration 0016) to re-enable.
+ */
+export const OTP_VERIFICATION_REQUIRED = false;
+
 function toUserSession(session: {
   userId: string;
   email: string | null;
@@ -139,6 +148,11 @@ function toUserSession(session: {
 }
 
 export function isPhoneVerified(profile: ProfileRow | null | undefined): boolean {
+  // TEMPORARY: OTP verification is disabled. Treating every profile as
+  // verified hides the verify banners and unblocks claiming without touching
+  // any stored phone_verified values. Set OTP_VERIFICATION_REQUIRED back to
+  // true to re-enable.
+  if (!OTP_VERIFICATION_REQUIRED) return true;
   return profile?.phone_verified === true;
 }
 
@@ -164,7 +178,9 @@ export async function requireUserSession(): Promise<UserSession> {
 export async function requireVerifiedUserSession(): Promise<UserSession> {
   const session = await requireUserSession();
 
-  if (!isPhoneVerified(session.profile)) {
+  // TEMPORARY: OTP disabled, so the verified-only gate behaves like the plain
+  // signed-in gate. The DB check is relaxed separately in migration 0016.
+  if (OTP_VERIFICATION_REQUIRED && !isPhoneVerified(session.profile)) {
     throw new ApiError(403, "Verify your phone number to continue.", "phone_unverified");
   }
 
@@ -191,6 +207,7 @@ export async function requireUserOrRedirect(nextPath?: string): Promise<UserSess
 /** For pages that only make sense once the phone is verified. */
 export async function requireVerifiedUserOrRedirect(nextPath?: string): Promise<UserSession> {
   const session = await requireUserOrRedirect(nextPath);
-  if (!isPhoneVerified(session.profile)) redirect("/app/verify");
+  // TEMPORARY: OTP disabled, so never bounce to /app/verify.
+  if (OTP_VERIFICATION_REQUIRED && !isPhoneVerified(session.profile)) redirect("/app/verify");
   return session;
 }

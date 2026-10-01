@@ -1327,8 +1327,10 @@ $$;
 -- -----------------------------------------------------------------------------
 -- assert_verified_user: the user-panel counterpart of assert_admin().
 --
--- Requirement: an unverified phone must not be able to claim or submit. This is
--- enforced here in the database, not merely by hiding a button, so a crafted
+-- TEMPORARY: the phone_verified requirement is bypassed while OTP is disabled
+-- in the app (OTP_VERIFICATION_REQUIRED = false in src/lib/auth.ts). The
+-- original phone check is kept commented below so re-enabling is a revert.
+-- Enforced here in the database, not merely by hiding a button, so a crafted
 -- RPC call from a client is rejected too.
 -- -----------------------------------------------------------------------------
 create or replace function public.assert_verified_user()
@@ -1345,16 +1347,21 @@ begin
     raise exception 'authentication required'
       using errcode = '42501', hint = 'auth_required';
   end if;
-  if not exists (select 1 from public.profiles p where p.id = v_user and p.phone_verified) then
-    raise exception 'verify your phone number to continue'
-      using errcode = '42501', hint = 'phone_unverified';
+  -- TEMPORARY: OTP off. Original gate:
+  -- if not exists (select 1 from public.profiles p where p.id = v_user and p.phone_verified) then
+  --   raise exception 'verify your phone number to continue'
+  --     using errcode = '42501', hint = 'phone_unverified';
+  -- end if;
+  if not exists (select 1 from public.profiles p where p.id = v_user) then
+    raise exception 'authentication required'
+      using errcode = '42501', hint = 'auth_required';
   end if;
   return v_user;
 end;
 $$;
 
 comment on function public.assert_verified_user() is
-  'Returns auth.uid() for a signed-in user whose phone is verified, else raises.';
+  'TEMPORARY while OTP is disabled: returns auth.uid() for a signed-in user with a profile row.';
 
 -- -----------------------------------------------------------------------------
 -- verify_phone_code: consume an OTP atomically.

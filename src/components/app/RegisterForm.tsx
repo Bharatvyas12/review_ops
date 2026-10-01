@@ -13,9 +13,9 @@ type RegisterResult = {
 /**
  * Account creation.
  *
- * The password never leaves this form except to be posted once, and the phone
- * number is stored unverified: claiming and submitting stay locked until the
- * code is checked server-side.
+ * The password never leaves this form except to be posted once.
+ * TEMPORARY: OTP verification is disabled, so accounts start verified and
+ * claiming works immediately.
  */
 export function RegisterForm({ disabled = false }: { disabled?: boolean }) {
   const router = useRouter();
@@ -126,7 +126,7 @@ export function RegisterForm({ disabled = false }: { disabled?: boolean }) {
           placeholder="98765 43210"
         />
         <p className="mt-1.5 text-[12px] leading-relaxed text-ink-500 dark:text-paper-200/50">
-          We send a 6-digit code here. Claiming stays locked until it is verified.
+          Your mobile number is used for order updates.
         </p>
       </div>
 

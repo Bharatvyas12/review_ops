@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthFrame } from "@/components/app/AuthFrame";
 import { OtpForm } from "@/components/app/OtpForm";
 import { UserSignOutButton } from "@/components/app/UserSignOutButton";
-import { requireUserOrRedirect, isPhoneVerified } from "@/lib/auth";
+import { requireUserOrRedirect, isPhoneVerified, OTP_VERIFICATION_REQUIRED } from "@/lib/auth";
 import { maskPhone } from "@/lib/otp";
 
 export const runtime = "edge";
@@ -19,6 +19,10 @@ export default async function VerifyPage({
   const session = await requireUserOrRedirect("/app/verify");
   const params = await searchParams;
 
+  // TEMPORARY: OTP verification is disabled, so this page is unreachable.
+  // Keep the route (re-enable by flipping OTP_VERIFICATION_REQUIRED) but send
+  // everyone straight into the app.
+  if (!OTP_VERIFICATION_REQUIRED) redirect("/app");
   if (isPhoneVerified(session.profile)) redirect("/app");
 
   return (

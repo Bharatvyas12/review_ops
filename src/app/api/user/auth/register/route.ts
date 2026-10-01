@@ -4,7 +4,6 @@ import { ApiError, errorResponse, jsonOk, parseJson } from "@/lib/http";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { serverEnv } from "@/lib/env/server";
 import { registerSchema } from "@/lib/validation";
-import { issuePhoneOtp } from "@/lib/otp-service";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -63,13 +62,15 @@ export async function POST(request: Request): Promise<Response> {
 
     // The on_auth_user_created trigger already inserts the profile; this makes
     // the name and phone explicit rather than depending on metadata plumbing.
+    // TEMPORARY: OTP is disabled, so new accounts are marked verified up front
+    // and no code is issued. Flip back to false + issuePhoneOtp when re-enabling.
     const { error: profileError } = await admin.from("profiles").upsert(
       {
         id: userId,
         full_name: input.fullName,
         phone: input.phone,
         role: "user",
-        phone_verified: false,
+        phone_verified: true,
       },
       { onConflict: "id" },
     );
@@ -92,9 +93,9 @@ export async function POST(request: Request): Promise<Response> {
       );
     }
 
-    const otp = await issuePhoneOtp(userId, input.phone);
-
-    return jsonOk({ ok: true, signedIn: true, redirectTo: "/app/verify", otp }, { status: 201 });
+    // TEMPORARY: OTP is disabled, so skip the code step entirely. No profile
+    // row is left unverified and the user lands straight in the app.
+    return jsonOk({ ok: true, signedIn: true, redirectTo: "/app", otp: null }, { status: 201 });
   } catch (error) {
     return errorResponse(error);
   }

@@ -52,12 +52,12 @@ export async function POST(request: Request): Promise<Response> {
 
     const isAdmin = profile?.role === "admin";
 
-    // Staff land in the console; a user who has not verified their phone goes
-    // straight back to the code step rather than into a half-usable app.
+    // TEMPORARY: OTP verification is disabled, so every non-admin lands in
+    // the app directly instead of being bounced to /app/verify.
     return jsonOk({
       ok: true,
-      redirectTo: isAdmin ? "/admin" : profile?.phone_verified ? "/app" : "/app/verify",
-      phoneVerified: isAdmin ? true : Boolean(profile?.phone_verified),
+      redirectTo: isAdmin ? "/admin" : "/app",
+      phoneVerified: true,
     });
   } catch (error) {
     return errorResponse(error);
