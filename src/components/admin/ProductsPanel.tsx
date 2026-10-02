@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/api-client";
 import { useRealtimeRefresh } from "@/lib/use-realtime-refresh";
 import { formatCurrency, formatDate, productSlotLabel } from "@/lib/format";
 import type { ProductStatus } from "@/lib/types";
+import * as XLSX from "xlsx";
 
 export type ProductListItem = {
   id: string;
@@ -141,6 +142,10 @@ export function ProductsPanel({
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkRows, setBulkRows] = useState<BulkFormRow[]>([]);
   const [bulkSaving, setBulkSaving] = useState(false);
+
+  // Excel upload state
+  const excelInputRef = useRef<HTMLInputElement>(null);
+  const [excelParseError, setExcelParseError] = useState<string | null>(null);
 
   // Filter campaigns list based on selected filter brand
   const filterAvailableCampaigns = useMemo(() => {
@@ -349,6 +354,173 @@ export function ProductsPanel({
     setBulkRows([]);
   }
 
+  // --- Excel Logic ---
+  function downloadSampleExcel() {
+    const COLUMNS = [
+      "product_name",
+      "brand_name",
+      "campaign_number",
+      "total_slots",
+      "daily_release_limit",
+      "cashback_amount",
+      "product_link",
+      "asin_code",
+      "description",
+      "image_url",
+    ];
+
+    // Build header row + 2 example rows
+    const sampleData = [
+      COLUMNS,
+      [
+        "Boat Airdopes 141",
+        brands[0]?.name ?? "BrandName",
+        "1",
+        "50",
+        "5",
+        "299",
+        "https://amazon.in/dp/B09N3ZNHTY",
+        "B09N3ZNHTY",
+        "Buy and review this product",
+        "",
+      ],
+      [
+        "Sony WH-1000XM5",
+        brands[0]?.name ?? "BrandName",
+        "2",
+        "20",
+        "",
+        "500",
+        "https://amazon.in/dp/EXAMPLE",
+        "",
+        "Noise cancelling headphones",
+        "",
+      ],
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sampleData);
+
+    // Set column widths
+    ws["!cols"] = COLUMNS.map(() => ({ wch: 22 }));
+
+    XLSX.utils.book_append_sheet(wb, ws, "Products");
+    XLSX.writeFile(wb, "sample_products.xlsx");
+  }
+
+  function handleExcelUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!event.target) return;
+    // Reset input so same file can be re-uploaded
+    event.target.value = "";
+    if (!file) return;
+
+    setExcelParseError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = e.target?.result;
+        const wb = XLSX.read(data, { type: "binary" });
+        const sheetName = wb.SheetNames[0];
+        if (!sheetName) throw new Error("Excel file has no sheets.");
+        const ws = wb.Sheets[sheetName];
+        if (!ws) throw new Error("Could not read the sheet from the file.");
+        // header: 1 → returns array-of-arrays (first row = headers)
+        const rows = (XLSX.utils.sheet_to_json<unknown[]>(ws, {
+          header: 1,
+          defval: "",
+        })) as unknown[][];
+
+        if (rows.length < 2) {
+          setExcelParseError("Excel has no data rows (need at least 1 row below header).");
+          return;
+        }
+
+        // First row = headers
+        const headers = (rows[0] as string[]).map((h) =>
+          String(h ?? "").trim().toLowerCase().replace(/\s+/g, "_"),
+        );
+
+        const defaultBrandId = brands[0]?.id ?? "";
+        const parsed: BulkFormRow[] = [];
+        const parseErrors: string[] = [];
+
+        for (let i = 1; i < rows.length; i++) {
+          const raw = rows[i] as unknown[];
+          // Skip completely empty rows
+          if (raw.every((v) => v === "" || v === null || v === undefined)) continue;
+
+          const get = (col: string) => {
+            const idx = headers.indexOf(col);
+            return idx >= 0 ? String(raw[idx] ?? "").trim() : "";
+          };
+
+          const productName = get("product_name");
+          const brandName = get("brand_name");
+          const campaignNum = get("campaign_number");
+          const totalSlots = get("total_slots");
+
+          // Match brand by name (case-insensitive)
+          const matchedBrand = brands.find(
+            (b) => b.name.toLowerCase() === brandName.toLowerCase(),
+          );
+          const brandId = matchedBrand?.id ?? defaultBrandId;
+
+          // Match campaign by number within that brand
+          const campNum = parseInt(campaignNum, 10);
+          const matchedCampaign = campaigns.find(
+            (c) => c.brandId === brandId && c.campaignNumber === campNum,
+          );
+          const campaignId = matchedCampaign?.id ?? "";
+
+          if (!productName) {
+            parseErrors.push(`Row ${i + 1}: product_name is empty — skipped.`);
+            continue;
+          }
+
+          parsed.push({
+            id: Math.random().toString(36).substring(2, 9),
+            name: productName,
+            brandId,
+            campaignId,
+            totalSlots: totalSlots || "10",
+            dailyReleaseLimit: get("daily_release_limit"),
+            cashbackAmount: get("cashback_amount"),
+            productLink: get("product_link"),
+            asinCode: get("asin_code"),
+            description: get("description"),
+            imageUrl: get("image_url"),
+            uploadPreview: null,
+          });
+        }
+
+        if (parsed.length === 0) {
+          setExcelParseError(
+            parseErrors.length > 0
+              ? `No valid rows found. Issues: ${parseErrors.join("; ")}`
+              : "No valid product rows found in the Excel file.",
+          );
+          return;
+        }
+
+        setBulkRows(parsed);
+        setBulkCreating(true);
+
+        if (parseErrors.length > 0) {
+          setExcelParseError(
+            `Loaded ${parsed.length} rows. Skipped: ${parseErrors.join("; ")}`,
+          );
+        }
+      } catch (err) {
+        setExcelParseError(
+          `Could not read the file: ${err instanceof Error ? err.message : "Unknown error"}`,
+        );
+      }
+    };
+    reader.readAsBinaryString(file);
+  }
+
   function addBulkRow() {
     setBulkRows((prev) => [...prev, createDefaultBulkRow(brands[0]?.id ?? "")]);
   }
@@ -532,15 +704,54 @@ export function ProductsPanel({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={openCreate} className="btn-primary">
             Add Single Product
           </button>
           <button type="button" onClick={openBulkCreate} className="btn-secondary">
             Add Bulk Products
           </button>
+
+          {/* Hidden file input for Excel upload */}
+          <input
+            ref={excelInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={handleExcelUpload}
+          />
+          <button
+            type="button"
+            onClick={() => { setExcelParseError(null); excelInputRef.current?.click(); }}
+            className="btn-secondary"
+            title="Upload an Excel / CSV file to bulk-import products"
+          >
+            📥 Upload Excel
+          </button>
+          <button
+            type="button"
+            onClick={downloadSampleExcel}
+            className="btn-ghost btn-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+            title="Download a sample Excel with all column headers"
+          >
+            ⬇ Sample Excel
+          </button>
         </div>
       </div>
+
+      {/* Excel parse error banner */}
+      {excelParseError && (
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <span className="font-semibold">Excel notice: </span>{excelParseError}
+          <button
+            type="button"
+            onClick={() => setExcelParseError(null)}
+            className="ml-3 underline opacity-70 hover:opacity-100"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="card mt-4 overflow-hidden">
         {filtered.length === 0 ? (
